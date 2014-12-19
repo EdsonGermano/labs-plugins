@@ -54,6 +54,9 @@ module Jekyll
 
             pages = site.pages
             pages.each do |page|
+                # Skip if we've disabled indexing for this page
+                next if page.data['no_index']
+
                 # add the page info to the ferret index
                 index << {
                   :title => page.data['title'],
