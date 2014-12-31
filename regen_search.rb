@@ -57,6 +57,9 @@ module Jekyll
                 # Skip if we've disabled indexing for this page
                 next if page.data['no_index']
 
+                # Skip if we don't have a page title, which means we're probably a redirect
+                next if (page.data['title'] || '').empty?
+
                 # add the page info to the ferret index
                 index << {
                   :title => page.data['title'],
