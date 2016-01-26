@@ -67,7 +67,7 @@ module Jekyll
       payload['site']['html_files'] += datasets['results'].collect { |d| 
           { 
             "path" => "/foundry/#{d['metadata']['domain']}/#{d['resource']['nbe_fxf']}",
-            "modified_time" => Date.parse(d['resource']['updatedAt']).strftime("%s")
+            "modified_time" => [1209601466, Date.parse(d['resource']['updatedAt']).strftime("%s").to_i].max
           }
         }
 
