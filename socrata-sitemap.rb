@@ -15,6 +15,7 @@ module Jekyll
 
     # Main plugin action, called by Jekyll-core
     def generate(site)
+      puts "Generating sitemap..."
       @site = site
       @site.config["time"]         = Time.new
       @site.config["html_files"]   = html_files.map(&:to_liquid)
@@ -63,6 +64,7 @@ module Jekyll
 
       # TODO: There really should be a cleaner way of doing this, but this works for now...
       datasets = HTTParty.get("http://api.us.socrata.com/api/catalog/v1?only=datasets&limit=1000") 
+      puts "... Including #{datasets['results'].count} Foundry pages..."
       payload = @site.site_payload
       payload['site']['html_files'] += datasets['results'].collect { |d| 
           { 
