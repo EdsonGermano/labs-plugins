@@ -62,16 +62,18 @@ module Jekyll
       site_map.content = File.read(source_path)
       site_map.data["layout"] = nil
 
-      # TODO: There really should be a cleaner way of doing this, but this works for now...
-      datasets = HTTParty.get("http://api.us.socrata.com/api/catalog/v1?only=datasets&limit=1000") 
-      puts "... Including #{datasets['results'].count} Foundry pages..."
-      payload = @site.site_payload
-      payload['site']['html_files'] += datasets['results'].collect { |d| 
-          { 
-            "path" => "/foundry/#{d['metadata']['domain']}/#{d['resource']['nbe_fxf']}",
-            "modified_time" => [1209601466, Date.parse(d['resource']['updatedAt']).strftime("%s").to_i].max
+      if @site.config['dataset_limit']
+        # TODO: There really should be a cleaner way of doing this, but this works for now...
+        datasets = HTTParty.get("http://api.us.socrata.com/api/catalog/v1?only=datasets&limit=#{@site.config['dataset_limit']}") 
+        puts "... Including #{datasets['results'].count} Foundry pages..."
+        payload = @site.site_payload
+        payload['site']['html_files'] += datasets['results'].collect { |d| 
+            { 
+              "path" => "/foundry/#{d['metadata']['domain']}/#{d['resource']['nbe_fxf']}",
+              "modified_time" => [1209601466, Date.parse(d['resource']['updatedAt']).strftime("%s").to_i].max
+            }
           }
-        }
+      end
 
       site_map.render({}, payload)
       site_map.output.gsub(/\s{2,}/, "\n")
