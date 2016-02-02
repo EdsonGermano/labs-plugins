@@ -10,7 +10,7 @@ module Jekyll
   end
 
   class SocrataSitemap < Jekyll::Generator
-    safe true
+    safe false
     priority :lowest
 
     # Main plugin action, called by Jekyll-core
