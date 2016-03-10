@@ -1,0 +1,95 @@
+---
+---
+{% assign parameter_pages = site.pages | where: "type", "parameter" | sort: 'order' %}
+{
+  "swagger": "2.0",
+  "info": {
+    "version": {{ page.version | jsonify }},
+    "title": {{ page.title | jsonify }},
+    "description": {{ page.description | jsonify }},
+    "termsOfService": "https://www.socrata.com/terms-of-service/",
+    "contact": {
+      "name": {{ page.domain | jsonify }}
+    }
+  },
+  "host": "{{ page.domain }}",
+  "basePath": "/resource/{{ page.uid }}",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "produces": {{ page.formats | jsonify }},
+  "paths": {
+    "/": {
+      "get": {
+        "description": "Returns all {{ page.entity_name_plural | capitalize }}",
+        "produces": {{ page.formats | jsonify }},
+        "parameters": [
+          {% assign parameters = page.properties | where: "$ref", null %}
+          {% for p in parameters %}
+            {% assign description = p.name | prepend: "Filter by `" | append: "`" %}
+            {% assign prop = p | merge: "in", "query" | merge: "required", false | merge: "description", description %}
+            {{ prop | jsonify }},
+          {% endfor %}
+          {% for param in parameter_pages %}
+            {
+              "name": {{ param.param | jsonify }},
+              "in": "query",
+              "required" : false,
+              "description" : {{ param.description | jsonify }},
+              "type": {{ param.data_type | jsonify }}{% if param.format %},
+              "format": {{ param.format | jsonify }}{% endif %}
+            }{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        ],
+        "responses": {
+          {% for c in site.data.response_codes %}
+            "{{ c.code }}" : {
+              "description": "{{ c.name }}: {{ c.description}}",
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/{{ page.entity_name | capitalize }}"
+                }
+              }
+            }{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "{{ page.entity_name | capitalize }}": {
+      "type": "object",
+      "properties": {
+        {% for prop in page.properties %}
+          {{ prop.name | jsonify }}: {{ prop | delete: "name" | jsonify }}{% unless forloop.last %},{% endunless %}
+        {% endfor %}
+      }
+    },
+    {% for type in page.complex_types %}
+      {{ type[0] | jsonify }} : {{ type[1] | jsonify }},
+    {% endfor %}
+    "ErrorMessage" : {
+      "type" : "object",
+      "properties" : {
+        "code" : {
+          "description" : "An error code string that can be used to uniquely identify each class of error",
+          "type" : "string"
+        },
+        "error" : {
+          "description" : "A boolean field you can check to validate if this is an error message",
+          "type" : "boolean"
+        },
+        "message" : {
+          "description" : "A human-readable error message with details on the error",
+          "type" : "string"
+        },
+        "data" : {
+          "description" : "A payload containing details about this error, such as the query that was issued",
+          "type" : "object"
+        }
+      }
+    }
+  }
+}
