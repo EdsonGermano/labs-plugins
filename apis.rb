@@ -10,10 +10,18 @@ module Jekyll
       if apis_json && site.config['dataset_limit']
         # If we've got an apis.json file, we should generate it
         puts "Generating APIs.json file"
-        datasets = HTTParty.get("http://api.us.socrata.com/api/catalog/v1?only=datasets&limit=#{site.config['dataset_limit']}") 
-        puts "... for #{datasets["results"].count} APIs..."
+        datasets = []
+       
+        loop do
+          new_batch = HTTParty.get("http://api.us.socrata.com/api/catalog/v1?only=datasets&limit=10000&offset=#{datasets.count}")["results"] 
+          datasets += new_batch
 
-        apis_json.data['apis'] = datasets["results"].collect { |dataset|
+          break if new_batch.count <= 0 || datasets.count > site.config['dataset_limit']
+        end
+        
+        puts "... for #{datasets.count} APIs..."
+
+        apis_json.data['apis'] = datasets.collect { |dataset|
           {
             "name" => dataset["resource"]["name"],
             "description" => dataset["resource"]["description"],

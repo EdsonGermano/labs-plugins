@@ -63,11 +63,18 @@ module Jekyll
       site_map.data["layout"] = nil
 
       if @site.config['dataset_limit']
-        # TODO: There really should be a cleaner way of doing this, but this works for now...
-        datasets = HTTParty.get("http://api.us.socrata.com/api/catalog/v1?only=datasets&limit=#{@site.config['dataset_limit']}") 
-        puts "... Including #{datasets['results'].count} Foundry pages..."
+        datasets = []
+       
+        loop do
+          new_batch = HTTParty.get("http://api.us.socrata.com/api/catalog/v1?only=datasets&limit=10000&offset=#{datasets.count}")["results"] 
+          datasets += new_batch
+
+          break if new_batch.count <= 0 || datasets.count > @site.config['dataset_limit']
+        end
+        
+        puts "... Including #{datasets.count} Foundry pages..."
         payload = @site.site_payload
-        payload['site']['html_files'] += datasets['results'].collect { |d| 
+        payload['site']['html_files'] += datasets.collect { |d| 
             { 
               "path" => "/foundry/#{d['metadata']['domain']}/#{d['resource']['nbe_fxf']}",
               "modified_time" => [1209601466, Date.parse(d['resource']['updatedAt']).strftime("%s").to_i].max
